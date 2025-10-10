@@ -16,19 +16,19 @@ class TextSummarizer:
     def __init__(self):
         self.tfidf_vectorizer = None
     
-    def summarize_text(self, text, sentences, keywords, max_sentences=5, min_sentences=2):
+    def summarize_text(self, text, sentences, keywords, max_sentences=None, min_sentences=3):
         """
-        Create extractive summary of text
+        Create comprehensive extractive summary with bullet points
         
         Args:
             text (str): Original text
             sentences (list): List of sentences
             keywords (list): Important keywords
-            max_sentences (int): Maximum sentences in summary
+            max_sentences (int): Maximum sentences in summary (None for auto)
             min_sentences (int): Minimum sentences in summary
             
         Returns:
-            str: Summary text
+            str: Summary text formatted as bullet points
         """
         if not sentences or len(sentences) <= min_sentences:
             return text[:1000] + "..." if len(text) > 1000 else text
@@ -37,26 +37,23 @@ class TextSummarizer:
             # Score sentences
             sentence_scores = self._score_sentences(sentences, keywords, text)
             
-            # Select top sentences
-            num_sentences = min(max_sentences, max(min_sentences, len(sentences) // 3))
+            # Calculate adaptive number of sentences based on document length
+            if max_sentences is None:
+                # Extract 30-50% of sentences for comprehensive coverage
+                num_sentences = max(min_sentences, min(len(sentences) // 2, len(sentences)))
+            else:
+                num_sentences = min(max_sentences, max(min_sentences, len(sentences) // 3))
+            
             top_sentences = self._select_top_sentences(sentences, sentence_scores, num_sentences)
             
-            # Create summary maintaining original order
+            # Create summary maintaining original order with bullet points
             summary_sentences = []
             for i, sentence in enumerate(sentences):
                 if i in top_sentences:
                     summary_sentences.append(sentence)
             
-            summary = ' '.join(summary_sentences)
-            
-            # Ensure summary is not too short or too long
-            if len(summary) < 100 and len(sentences) > 1:
-                # Add more sentences if summary is too short
-                additional_sentences = min(2, len(sentences) - len(summary_sentences))
-                for i in range(additional_sentences):
-                    if i not in top_sentences and i < len(sentences):
-                        summary_sentences.append(sentences[i])
-                summary = ' '.join(summary_sentences)
+            # Format as bullet points for better readability
+            summary = self._format_as_bullets(summary_sentences)
             
             return summary.strip()
             
@@ -245,17 +242,20 @@ class TextSummarizer:
             target_sentences = min(5, max(2, len(sentences) // 3))
             top_sentences = self._select_top_sentences(sentences, sentence_scores, target_sentences)
             
-            # Create abstract
+            # Create abstract with bullet points
             abstract_sentences = []
             for i in top_sentences:
                 if i < len(sentences):
                     abstract_sentences.append(sentences[i])
             
-            abstract = ' '.join(abstract_sentences)
+            # Format as bullet points
+            abstract = self._format_as_bullets(abstract_sentences)
             
-            # Truncate if too long
-            if len(abstract) > max_length:
-                abstract = abstract[:max_length].rsplit(' ', 1)[0] + "..."
+            # Truncate if too long (count actual text, not bullets)
+            if len(abstract) > max_length + (len(abstract_sentences) * 3):  # Account for bullet formatting
+                # Take first few sentences
+                truncated_sentences = abstract_sentences[:3]
+                abstract = self._format_as_bullets(truncated_sentences) + "\n• ..."
             
             return abstract
             
@@ -263,15 +263,32 @@ class TextSummarizer:
             logger.error(f"Error creating collective abstract: {e}")
             return self._fallback_abstract(all_summaries, max_length)
     
+    def _format_as_bullets(self, sentences):
+        """Format sentences as bullet points"""
+        if not sentences:
+            return ""
+        
+        # Create bullet point format
+        bullet_points = []
+        for sentence in sentences:
+            # Clean and format each sentence
+            sentence = sentence.strip()
+            if sentence and not sentence.startswith('•'):
+                bullet_points.append(f"• {sentence}")
+            else:
+                bullet_points.append(sentence)
+        
+        return '\n'.join(bullet_points)
+    
     def _fallback_summary(self, text, max_sentences):
         """Fallback summary method using simple truncation"""
         sentences = text.split('.')
         sentences = [s.strip() + '.' for s in sentences if s.strip()]
         
-        if len(sentences) <= max_sentences:
-            return text
+        if max_sentences and len(sentences) > max_sentences:
+            sentences = sentences[:max_sentences]
         
-        return '. '.join(sentences[:max_sentences])
+        return self._format_as_bullets(sentences)
     
     def _fallback_abstract(self, summaries, max_length):
         """Fallback abstract creation"""

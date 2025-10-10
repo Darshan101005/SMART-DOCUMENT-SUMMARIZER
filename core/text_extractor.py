@@ -159,3 +159,106 @@ class TextExtractor:
                 'text': '',
                 'error': f'TXT extraction error: {str(e)}'
             }
+    
+    def _extract_rtf(self, file_path):
+        """Extract text from RTF file"""
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+                rtf_content = file.read()
+            
+            text = rtf_to_text(rtf_content)
+            
+            if not text or not text.strip():
+                return {
+                    'success': False,
+                    'text': '',
+                    'error': 'No text could be extracted from RTF'
+                }
+            
+            return {
+                'success': True,
+                'text': text.strip(),
+                'error': ''
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'text': '',
+                'error': f'RTF extraction error: {str(e)}'
+            }
+    
+    def _extract_odt(self, file_path):
+        """Extract text from ODT file"""
+        try:
+            doc = odf_load(str(file_path))
+            text = ""
+            
+            # Extract all paragraphs
+            for paragraph in doc.getElementsByType(odf_text.P):
+                text += odf_text.teletype.extractText(paragraph) + "\n"
+            
+            # Extract all headings
+            for heading in doc.getElementsByType(odf_text.H):
+                text += odf_text.teletype.extractText(heading) + "\n"
+            
+            if not text.strip():
+                return {
+                    'success': False,
+                    'text': '',
+                    'error': 'No text could be extracted from ODT'
+                }
+            
+            return {
+                'success': True,
+                'text': text.strip(),
+                'error': ''
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'text': '',
+                'error': f'ODT extraction error: {str(e)}'
+            }
+    
+    def _extract_markdown(self, file_path):
+        """Extract text from Markdown file"""
+        try:
+            # Try different encodings
+            encodings = ['utf-8', 'utf-16', 'iso-8859-1', 'cp1252']
+            
+            for encoding in encodings:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as file:
+                        md_content = file.read()
+                    
+                    # Convert markdown to HTML then extract text
+                    html = markdown.markdown(md_content)
+                    
+                    # Simple HTML tag removal for text extraction
+                    import re
+                    text = re.sub(r'<[^>]+>', ' ', html)
+                    text = re.sub(r'\s+', ' ', text).strip()
+                    
+                    if text:
+                        return {
+                            'success': True,
+                            'text': text,
+                            'error': ''
+                        }
+                except UnicodeDecodeError:
+                    continue
+            
+            return {
+                'success': False,
+                'text': '',
+                'error': 'Could not decode markdown file with any supported encoding'
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'text': '',
+                'error': f'Markdown extraction error: {str(e)}'
+            }

@@ -36,8 +36,8 @@ def main():
     uploaded_files = st.file_uploader(
         "Choose files (max 5 files, 50MB total)",
         accept_multiple_files=True,
-        type=['pdf', 'docx', 'txt'],
-        help="Supported formats: PDF, Word Documents (.docx), Text files (.txt)"
+        type=['pdf', 'docx', 'txt', 'rtf', 'odt', 'md'],
+        help="Supported formats: PDF, DOCX, TXT, RTF, ODT, Markdown"
     )
     
     # Validation
@@ -134,11 +134,13 @@ def display_results():
     st.info("This abstract summarizes the key themes and insights across all uploaded documents.")
     
     if data['collective_abstract']:
-        # Highlight keywords in abstract
+        # Highlight keywords in abstract (preserve newlines for bullets)
         highlighted_abstract = highlighter.highlight_keywords(
             data['collective_abstract'], 
             data['global_keywords']
         )
+        # Replace newlines with <br> for proper HTML rendering
+        highlighted_abstract = highlighted_abstract.replace('\n', '<br>')
         st.markdown(highlighted_abstract, unsafe_allow_html=True)
     else:
         st.warning("No collective abstract could be generated.")
@@ -181,6 +183,8 @@ def display_results():
                     doc_summary['summary'], 
                     doc_summary['keywords']
                 )
+                # Replace newlines with <br> for proper HTML rendering of bullets
+                highlighted_summary = highlighted_summary.replace('\n', '<br>')
                 st.markdown(highlighted_summary, unsafe_allow_html=True)
             else:
                 st.warning(f"Could not generate summary for {doc_summary['filename']}")

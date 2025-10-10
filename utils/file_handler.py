@@ -13,7 +13,7 @@ class FileHandler:
     
     def __init__(self):
         self.text_extractor = TextExtractor()
-        self.supported_extensions = ['.pdf', '.docx', '.txt']
+        self.supported_extensions = ['.pdf', '.docx', '.txt', '.rtf', '.odt', '.md']
         self.max_file_size = 50 * 1024 * 1024  # 50MB in bytes
     
     def validate_file(self, file_path, file_size=None):
