@@ -34,6 +34,7 @@ class TextPreprocessor:
         """Download required NLTK data"""
         nltk_downloads = [
             'punkt',
+            'punkt_tab',
             'stopwords',
             'averaged_perceptron_tagger',
             'wordnet'

@@ -45,7 +45,6 @@ class DocumentProcessor:
                 # Collect texts for global analysis
                 if doc_result['text']:
                     all_texts.append(doc_result['text'])
-                    all_preprocessed_texts.append(doc_result['preprocessed_text'])
             
             if not all_texts:
                 return {
@@ -56,7 +55,7 @@ class DocumentProcessor:
             
             # Extract global keywords
             global_keywords = self.keyword_extractor.extract_global_keywords(
-                all_preprocessed_texts, max_keywords=15
+                all_texts, max_keywords=15
             )
             
             # Create collective abstract
@@ -96,14 +95,13 @@ class DocumentProcessor:
             
             # Preprocess text
             clean_text = self.preprocessor.preprocess_text(text)
-            preprocessed_for_keywords = self.preprocessor.preprocess_text(text, for_keywords=True)
             
             # Extract sentences
             sentences = self.preprocessor.extract_sentences(clean_text)
             
-            # Extract keywords using both methods
+            # Extract keywords using both methods (use clean text to preserve readable words)
             tfidf_keywords = self.keyword_extractor.extract_keywords_tfidf(
-                [preprocessed_for_keywords], max_keywords=10
+                [clean_text], max_keywords=10
             )
             textrank_keywords = self.keyword_extractor.extract_keywords_textrank(
                 clean_text, max_keywords=10
@@ -126,7 +124,6 @@ class DocumentProcessor:
             return {
                 'filename': filename,
                 'text': clean_text,
-                'preprocessed_text': preprocessed_for_keywords,
                 'summary': summary,
                 'keywords': combined_keywords,
                 'word_count': word_count,
@@ -139,7 +136,6 @@ class DocumentProcessor:
             return {
                 'filename': doc.get('filename', 'unknown'),
                 'text': '',
-                'preprocessed_text': '',
                 'summary': '',
                 'keywords': [],
                 'word_count': 0,

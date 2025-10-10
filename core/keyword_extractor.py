@@ -35,12 +35,21 @@ class KeywordExtractor:
             # Remove empty texts
             texts = [text for text in texts if text.strip()]
             
+            # Adjust parameters based on number of documents
+            if len(texts) == 1:
+                # For single document, use different parameters to avoid warnings
+                max_df = 1.0
+                min_df = 1
+            else:
+                max_df = 0.8
+                min_df = 1
+            
             # Initialize TF-IDF vectorizer
             self.tfidf_vectorizer = TfidfVectorizer(
                 max_features=1000,
                 ngram_range=(1, 2),  # Include unigrams and bigrams
-                min_df=1,
-                max_df=0.8,
+                min_df=min_df,
+                max_df=max_df,
                 stop_words='english'
             )
             
