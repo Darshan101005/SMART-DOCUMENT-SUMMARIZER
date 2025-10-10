@@ -5,6 +5,10 @@ import PyPDF2
 import docx
 from pathlib import Path
 import logging
+from striprtf.striprtf import rtf_to_text
+from odf import text as odf_text
+from odf.opendocument import load as odf_load
+import markdown
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +16,7 @@ class TextExtractor:
     """Handles text extraction from various file formats"""
     
     def __init__(self):
-        self.supported_formats = ['.pdf', '.docx', '.txt']
+        self.supported_formats = ['.pdf', '.docx', '.txt', '.rtf', '.odt', '.md']
     
     def extract_text(self, file_path):
         """
@@ -34,6 +38,12 @@ class TextExtractor:
                 return self._extract_docx(file_path)
             elif extension == '.txt':
                 return self._extract_txt(file_path)
+            elif extension == '.rtf':
+                return self._extract_rtf(file_path)
+            elif extension == '.odt':
+                return self._extract_odt(file_path)
+            elif extension == '.md':
+                return self._extract_markdown(file_path)
             else:
                 return {
                     'success': False,
